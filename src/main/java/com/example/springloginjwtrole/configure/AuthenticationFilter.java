@@ -30,7 +30,9 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String username = (String) request.getAttribute("username");
         String authenticationToken = (String) request.getAttribute("authenticationToken");
-        if(username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+        // 携带了token
+        if(authenticationToken != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userService.loadUserByUsername(username);
             if(jwtTokenUtil.validateToken(authenticationToken, userDetails)) {
                 UsernamePasswordAuthenticationToken authentication = jwtTokenUtil.getAuthenticationToken(
@@ -41,8 +43,11 @@ public class AuthenticationFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-        }
 
-        filterChain.doFilter(request, response);
+            filterChain.doFilter(request, response);
+        } else {
+            // 未携带token
+            filterChain.doFilter(request, response);
+        }
     }
 }
